@@ -29,7 +29,7 @@ def create_app():
                 return redirect(url_for('register'))
 
             # Mã hóa mật khẩu
-            hashed_password = generate_password_hash(password, method='sha256')
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
             # Tạo người dùng mới
             new_user = User(username=username, password=hashed_password)
@@ -46,8 +46,6 @@ def create_app():
         if request.method == 'POST':
             username = request.form['username']
             password = request.form['password']
-            
-            # Kiểm tra thông tin đăng nhập
             user = User.query.filter_by(username=username).first()
             if user and check_password_hash(user.password, password):
                 session['user_id'] = user.id
@@ -56,7 +54,6 @@ def create_app():
             else:
                 flash('Invalid credentials!')
                 return redirect(url_for('login'))
-        
         return render_template('login.html')
 
     @app.route('/logout')
@@ -68,13 +65,11 @@ def create_app():
     def chat():
         if 'user_id' not in session:
             return redirect(url_for('login'))
-        
         if request.method == 'POST':
             content = request.form['content']
             msg = Message(content=content, user_id=session['user_id'])
             db.session.add(msg)
             db.session.commit()
-        
         messages = Message.query.order_by(Message.timestamp.desc()).all()
         return render_template('chatroom.html', messages=messages, username=session.get('username'))
 
@@ -82,8 +77,6 @@ def create_app():
 
 app = create_app()
 
-# Chỉ tạo bảng khi chạy ứng dụng trong môi trường phát triển (local)
+# Chạy Flask với cổng được Render cấp từ biến môi trường PORT
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Tạo bảng nếu chưa tồn tại
-    app.run(debug=True, host='0.0.0.0', port=5000)  # Đảm bảo Flask lắng nghe trên mọi địa chỉ IP
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
