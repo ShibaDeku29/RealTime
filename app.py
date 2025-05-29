@@ -1,13 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_socketio import SocketIO
 from config import Config
 from extensions import db
 from models.user import User
 from models.message import Message
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Khởi tạo SocketIO
+    socketio = SocketIO(app)
 
     db.init_app(app)
 
@@ -73,12 +78,23 @@ def create_app():
         messages = Message.query.order_by(Message.timestamp.desc()).all()
         return render_template('chatroom.html', messages=messages, username=session.get('username'))
 
+    # Emit message events for SocketIO
+    @socketio.on('message')
+    def handle_message(message):
+        # Here you can handle the incoming message event
+        print(f"Received message: {message}")
+        # Broadcast it to all clients
+        socketio.emit('message', {'data': message})
+
     return app
 
 app = create_app()
+
+# Lấy cổng từ biến môi trường, nếu không có sẽ mặc định là 5000
+port = int(os.environ.get("PORT", 5000))
 
 # Chạy Flask với cổng được Render cấp từ biến môi trường PORT
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Tạo bảng nếu chưa tồn tại
-    app.run(debug=True, host='0.0.0.0', port=5000)  # Đảm bảo Flask lắng nghe trên mọi địa chỉ IP
+    socketio.run(app, host='0.0.0.0', port=port)  # Sử dụng SocketIO để chạy ứng dụng
