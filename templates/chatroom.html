@@ -27,7 +27,7 @@
 
     socket.on('message', function(msg){
         var div = document.createElement('div');
-        div.textContent = msg;
+        div.textContent = msg.data; // Đã sửa đổi ở đây
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
     });

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_socketio import SocketIO  # Import đúng SocketIO
+from flask_socketio import SocketIO
+import socketio  # Import đúng SocketIO
 from config import Config
 from extensions import db
 from models.user import User
