@@ -12,7 +12,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Khởi tạo SocketIO
-    socketio = SocketIO(app)
+    socketio = SocketIO(app, manage_session=False)  # Thêm manage_session=False nếu không sử dụng session của socketio
 
     db.init_app(app)
 
@@ -97,4 +97,4 @@ port = int(os.environ.get("PORT", 5000))
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Tạo bảng nếu chưa tồn tại
-    socketio.run(app, host='0.0.0.0', port=port)  # Sử dụng SocketIO để chạy ứng dụng
+    SocketIO.run(app, host='0.0.0.0', port=port)  # Sử dụng SocketIO để chạy ứng dụng
