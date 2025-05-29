@@ -79,4 +79,6 @@ app = create_app()
 
 # Chạy Flask với cổng được Render cấp từ biến môi trường PORT
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    with app.app_context():
+        db.create_all()  # Tạo bảng nếu chưa tồn tại
+    app.run(debug=True, host='0.0.0.0', port=5000)  # Đảm bảo Flask lắng nghe trên mọi địa chỉ IP
