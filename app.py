@@ -97,4 +97,4 @@ port = int(os.environ.get("PORT", 5000))
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Tạo bảng nếu chưa tồn tại
-    SocketIO.run(app, host='0.0.0.0', port=port)  # Sử dụng SocketIO để chạy ứng dụng
+    socketio.run(app, host='0.0.0.0', port=port)
