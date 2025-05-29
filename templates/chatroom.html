@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Chat Room{% endblock %}
+{% block content %}
+<div class="mb-3 text-end">
+    <span class="me-3">Xin chào, <b>{{ username }}</b>!</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Đăng xuất</a>
+</div>
+<div class="card shadow-lg rounded" style="max-width:600px;margin:auto;">
+    <div class="card-header text-center fw-bold" style="color:#667eea;">💬 Public Chat Room</div>
+    <div class="card-body" id="chat" style="height:320px;overflow-y:auto;background:#f8fafc;">
+        {% for msg in messages %}
+            <div>{{ msg.username }}: {{ msg.content }}</div>
+        {% endfor %}
+    </div>
+    <div class="card-footer p-2">
+        <div class="input-group">
+            <input type="text" id="message" class="form-control" placeholder="Nhập tin nhắn..." autofocus>
+            <button class="btn btn-primary" onclick="sendMessage()">Gửi</button>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.socket.io/socket.io-3.0.3.min.js"></script>
+<script>
+    var socket = io();
+    var chat = document.getElementById('chat');
+    var messageInput = document.getElementById('message');
+
+    socket.on('message', function(msg){
+        var div = document.createElement('div');
+        div.textContent = msg;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    });
+
+    function sendMessage(){
+        var message = messageInput.value.trim();
+        if(message === "") return;
+        socket.send(message);
+        messageInput.value = "";
+    }
+
+    messageInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") sendMessage();
+    });
+</script>
+{% endblock %}
