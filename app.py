@@ -3,6 +3,7 @@ from config import Config
 from extensions import db
 from models.user import User
 from models.message import Message
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def create_app():
     app = Flask(__name__)
@@ -21,14 +22,23 @@ def create_app():
         if request.method == 'POST':
             username = request.form['username']
             password = request.form['password']
+            
+            # Kiểm tra nếu username đã tồn tại
             if User.query.filter_by(username=username).first():
                 flash('Username already exists!')
                 return redirect(url_for('register'))
-            new_user = User(username=username, password=password)
+
+            # Mã hóa mật khẩu
+            hashed_password = generate_password_hash(password, method='sha256')
+
+            # Tạo người dùng mới
+            new_user = User(username=username, password=hashed_password)
             db.session.add(new_user)
             db.session.commit()
+
             flash('Register successful!')
             return redirect(url_for('login'))
+        
         return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
@@ -36,14 +46,17 @@ def create_app():
         if request.method == 'POST':
             username = request.form['username']
             password = request.form['password']
-            user = User.query.filter_by(username=username, password=password).first()
-            if user:
+            
+            # Kiểm tra thông tin đăng nhập
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password, password):
                 session['user_id'] = user.id
                 session['username'] = user.username
                 return redirect(url_for('chat'))
             else:
                 flash('Invalid credentials!')
                 return redirect(url_for('login'))
+        
         return render_template('login.html')
 
     @app.route('/logout')
@@ -55,11 +68,13 @@ def create_app():
     def chat():
         if 'user_id' not in session:
             return redirect(url_for('login'))
+        
         if request.method == 'POST':
             content = request.form['content']
             msg = Message(content=content, user_id=session['user_id'])
             db.session.add(msg)
             db.session.commit()
+        
         messages = Message.query.order_by(Message.timestamp.desc()).all()
         return render_template('chatroom.html', messages=messages, username=session.get('username'))
 
@@ -67,8 +82,8 @@ def create_app():
 
 app = create_app()
 
-# Tạo bảng nếu chạy local
+# Chỉ tạo bảng khi chạy ứng dụng trong môi trường phát triển (local)
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+        db.create_all()  # Tạo bảng nếu chưa tồn tại
+    app.run(debug=True, host='0.0.0.0', port=5000)  # Đảm bảo Flask lắng nghe trên mọi địa chỉ IP
